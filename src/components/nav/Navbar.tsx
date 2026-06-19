@@ -10,10 +10,11 @@ import {
   IconButton,
   Image,
   Stack,
+  Text,
 } from '@chakra-ui/react'
 import NextLink from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { LuMenu } from 'react-icons/lu'
 
 import { NAV_ITEMS } from './nav-config'
@@ -53,36 +54,58 @@ function NavLink({ href, label, onNavigate, stacked = false }: NavLinkProps) {
   )
 }
 
-export function Navbar() {
-  const [open, setOpen] = useState(false)
+function NavBrand() {
+  return (
+    <NextLink href="/" aria-label="Al-Furqan Institute home">
+        <Image
+          src="/logo.jpeg"
+          alt=""
+          w={{base: "80vw", md: "20%"}}
+          h="auto"
+          objectFit="contain"
+        />
+    </NextLink>
+  )
+}
 
-  const closeMenu = () => setOpen(false)
+export function Navbar() {
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 0)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  const closeDrawer = () => setDrawerOpen(false)
 
   return (
     <Box
       as="header"
-      position="sticky"
+      position="fixed"
       top={0}
+      left={0}
+      right={0}
       zIndex="sticky"
       bg="brand.900"
-      borderBottomWidth="1px"
+      borderBottomWidth={scrolled ? '1px' : '0'}
       borderColor="brand.800"
+      transition="border-color 0.15s"
+      p={{base: 0, md: 1}}
+      w="100%"
     >
       <Container maxW="6xl">
-        <Flex align="center" justify="space-between" h={{ base: 16, md: 20 }} gap={4}>
-          <NextLink href="/" aria-label="Al-Furqan Institute home">
-            <Image
-              src="/logo.jpeg"
-              alt=""
-              h={{ base: 14, md: 16 }}
-              w="auto"
-            />
-          </NextLink>
+        <Flex align="center" justify="space-between" h={{ base: 16, md: 20 }} w={{base: "100%", md: "90%"}} gap={4}>
+          <HStack gap={{ base: 4, lg: 12 }} align="center">
+            <NavBrand />
 
-          <HStack as="nav" aria-label="Main" gap={1} display={{ base: 'none', lg: 'flex' }}>
-            {NAV_ITEMS.map((item) => (
-              <NavLink key={item.href} href={item.href} label={item.label} />
-            ))}
+            <HStack as="nav" aria-label="Main" gap={1} display={{ base: 'none', lg: 'flex' }}>
+              {NAV_ITEMS.map((item) => (
+                <NavLink key={item.href} href={item.href} label={item.label} />
+              ))}
+            </HStack>
           </HStack>
 
           <HStack gap={2}>
@@ -99,8 +122,8 @@ export function Navbar() {
             </Button>
 
             <Drawer.Root
-              open={open}
-              onOpenChange={(details) => setOpen(details.open)}
+              open={drawerOpen}
+              onOpenChange={(details) => setDrawerOpen(details.open)}
               placement="end"
             >
               <Drawer.Trigger asChild>
@@ -131,7 +154,7 @@ export function Navbar() {
                           href={item.href}
                           label={item.label}
                           stacked
-                          onNavigate={closeMenu}
+                          onNavigate={closeDrawer}
                         />
                       ))}
                       <Button
@@ -143,7 +166,7 @@ export function Navbar() {
                         fontWeight="semibold"
                         _hover={{ bg: 'accent.400' }}
                       >
-                        <NextLink href="/subscribe" onClick={closeMenu}>
+                        <NextLink href="/subscribe" onClick={closeDrawer}>
                           Get alerts
                         </NextLink>
                       </Button>

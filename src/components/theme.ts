@@ -1,23 +1,30 @@
 import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react"
 
-// Al-Furqan Institute brand — sampled from logo.jpeg:
-// navy field (#203050), gold arch & wordmark (#d0a040–#c09040), white book & subtitle.
+// Al-Furqan Institute brand — navy (#25274E), gold arch & wordmark (#d0a040–#c09040).
 const config = defineConfig({
   theme: {
     tokens: {
+      fonts: {
+        heading: {
+          value: 'var(--font-google-sans), ui-sans-serif, system-ui, sans-serif',
+        },
+        body: {
+          value: 'var(--font-google-sans), ui-sans-serif, system-ui, sans-serif',
+        },
+      },
       colors: {
         brand: {
-          50: { value: "#eef1f8" },
-          100: { value: "#d4daea" },
-          200: { value: "#b0bbd4" },
-          300: { value: "#8997b8" },
-          400: { value: "#627299" },
-          500: { value: "#455578" },
-          600: { value: "#334066" },
-          700: { value: "#283456" },
-          800: { value: "#222448" },
-          900: { value: "#282850" },
-          950: { value: "#1a1c38" },
+          50: { value: "#eeeff5" },
+          100: { value: "#d0d2e4" },
+          200: { value: "#aeb1cb" },
+          300: { value: "#8a8eb2" },
+          400: { value: "#666b99" },
+          500: { value: "#4a4f7f" },
+          600: { value: "#3a3f6c" },
+          700: { value: "#303565" },
+          800: { value: "#2a2d58" },
+          900: { value: "#25274E" },
+          950: { value: "#181a32" },
         },
         accent: {
           50: { value: "#fbf6ea" },
