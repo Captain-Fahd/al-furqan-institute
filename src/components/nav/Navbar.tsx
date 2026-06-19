@@ -60,7 +60,7 @@ function NavBrand() {
         <Image
           src="/logo.jpeg"
           alt=""
-          w={{base: "80vw", md: "20%"}}
+          w={{base: "22vw", md: "20%"}}
           h="auto"
           objectFit="contain"
         />
