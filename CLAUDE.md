@@ -33,6 +33,18 @@ See [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) for the full requirements.
 | Hosting | **Vercel** | Auto-scaling + CDN caching for Ramadan/Eid traffic spikes |
 | Dates | Vetted Hijri↔Gregorian library | For display/estimates only — see domain decisions above |
 
+## Project Structure
+All Payload-generated code lives inside the `src/app/(payload)` route group, keeping it
+isolated from the public `(frontend)` group:
+- `src/app/(payload)/payload.config.ts` — Payload config (the `@payload-config` alias in
+  `tsconfig.json` points here).
+- `src/app/(payload)/payload-types.ts` — generated types (`bun run generate:types`).
+- `src/app/(payload)/collections/` — collection definitions (`Users`, `Media`, …).
+- `src/app/(payload)/admin/`, `api/` — Payload's admin UI and REST/GraphQL routes, plus
+  the generated `admin/importMap.js`.
+
+Import the config via the `@payload-config` alias — never a relative or `@/payload.config` path.
+
 ## Core Data Model
 - **Verdict** — hijriMonth, hijriYear, gregorianStartDate, status (sighted/not-sighted),
   region (Melbourne), summary, publishedAt → fires email.
