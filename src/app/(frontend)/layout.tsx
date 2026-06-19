@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { Navbar } from '@/components/nav/Navbar'
 import { Provider } from '@/components/ui/provider'
 
 export const metadata = {
@@ -13,8 +14,11 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
-        <Provider>{children}</Provider>
+      <body suppressHydrationWarning>
+        <Provider>
+          <Navbar />
+          {children}
+        </Provider>
       </body>
     </html>
   )

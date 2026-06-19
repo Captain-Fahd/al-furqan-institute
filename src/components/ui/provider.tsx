@@ -7,10 +7,10 @@ import {
   type ColorModeProviderProps,
 } from "./color-mode"
 
-export function Provider(props: ColorModeProviderProps) {
+export function Provider({ children, ...rest }: ColorModeProviderProps) {
   return (
     <ChakraProvider value={system}>
-      <ColorModeProvider {...props} />
+      <ColorModeProvider {...rest}>{children}</ColorModeProvider>
     </ChakraProvider>
   )
 }
