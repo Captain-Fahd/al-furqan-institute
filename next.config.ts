@@ -26,6 +26,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(dirname),
   },
+  devIndicators: false,
 }
 
 export default withPayload(nextConfig, { devBundleServerPackages: false })
