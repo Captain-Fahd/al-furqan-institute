@@ -10,6 +10,20 @@ type HijriDateParts = {
     isEstimated: boolean,
 }
 
+export function getMelbourneGregorianDate(): {year: number, month: number, day: number} {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Australia/Melbourne',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).formatToParts(new Date());
+    return {
+        year: Number(parts.find(p => p.type === 'year')?.value),
+        month: Number(parts.find(p => p.type === 'month')?.value),
+        day: Number(parts.find(p => p.type === 'day')?.value),
+    };
+}
+
 export function gregorianToHijriParts(gregorianDate: {year: number, month: number, day: number}): HijriDateParts {
     const hijriDate = toHijri(new Date(gregorianDate.year, gregorianDate.month - 1, gregorianDate.day));
     return {
