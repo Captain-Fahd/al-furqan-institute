@@ -1,6 +1,4 @@
 import { Heading, Stack, Text } from '@chakra-ui/react'
-import React from 'react'
-
 import { getHijriDateDisplay } from '@/lib/hijri'
 
 export function HeroBrand() {

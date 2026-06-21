@@ -1,50 +1,69 @@
-export const hijriDateOptions = {
-    'Muharram': {
-        start: '1 Muharram 1447 AH',
-        end: '29 Muharram 1447 AH',
-    },
-    'Safar': {
-        start: '1 Safar 1447 AH',
-        end: '29 Safar 1447 AH',
-    },
-    'Rabi\'I': {
-        start: '1 Rabi\'I 1447 AH',
-        end: '29 Rabi\'I 1447 AH',
-    },
-    'Jumada I': {
-        start: '1 Jumada I 1447 AH',
-        end: '29 Jumada I 1447 AH',
-    },
-    'Rabi\'II': {
-        start: '1 Rabi\'II 1447 AH',
-        end: '29 Rabi\'II 1447 AH',
-    },
-    'Jumada II': {
-        start: '1 Jumada II 1447 AH',
-        end: '29 Jumada II 1447 AH',
-    },
-    'Rajab': {
-        start: '1 Rajab 1447 AH',
-        end: '29 Rajab 1447 AH',
-    },
-    'Sha\'ban': {
-        start: '1 Sha\'ban 1447 AH',
-        end: '29 Sha\'ban 1447 AH',
-    },
-    'Ramadan': {
-        start: '1 Ramadan 1447 AH',
-        end: '29 Ramadan 1447 AH',
-    },
-    'Shawwal': {
-        start: '1 Shawwal 1447 AH',
-        end: '29 Shawwal 1447 AH',
-    },
-    'Dhul-Hijjah': {
-        start: '1 Dhul-Hijjah 1447 AH',
-        end: '29 Dhul-Hijjah 1447 AH',
-    },
+import {toHijri} from 'hijri-date/lib/safe';
+import { HijriDateDisplay } from '@/lib/hijri/types';
+
+export const HIJRI_MONTHS = ['Muharram', 'Safar', 'Rabi\' I', 'Rabi\' II', 'Jumada I', 'Jumada II', 'Rajab', 'Sha\'ban', 'Ramadan', 'Shawwal', 'Dhul-Qi\'dah', 'Dhul-Hijjah']
+
+type HijriDateParts = {
+    day: number,
+    month: string,
+    year: number,
+    isEstimated: boolean,
 }
 
-export const getHijriDate = async (): Promise<String> => {
-    return ""
+export function gregorianToHijriParts(gregorianDate: {year: number, month: number, day: number}): HijriDateParts {
+    const hijriDate = toHijri(new Date(gregorianDate.year, gregorianDate.month - 1, gregorianDate.day));
+    return {
+        day: hijriDate.getDate(),
+        month: HIJRI_MONTHS[hijriDate.getMonth() - 1],
+        year: hijriDate.getFullYear(),
+        isEstimated: false,
+    }
+}
+
+function getMelbourneToday(): {year: number, month: number, day: number} {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Australia/Melbourne',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).formatToParts(new Date());
+    
+    const get = (type: string) => parts.find(p => p.type === type)?.value;
+        return {
+            year: Number(get('year')),
+            month: Number(get('month')),
+            day: Number(get('day')),
+        }
+}
+
+const getEstimatedHijriDate = (): HijriDateParts => {
+    const today = getMelbourneToday();
+    const gregorianDate = new Date(today.year, today.month - 1, today.day);
+    const hijriDate = toHijri(gregorianDate);
+
+    return {
+        day: hijriDate.getDate(),
+        month: HIJRI_MONTHS[hijriDate.getMonth() - 1],
+        year: hijriDate.getFullYear(),
+        isEstimated: true,
+    }
+}
+
+export function getFormattedHijriDate(): HijriDateDisplay {
+    const today = getMelbourneToday();
+    const estimatedHijriDate = getEstimatedHijriDate();
+    const gregorianDate = new Intl.DateTimeFormat('en-AU', {
+        timeZone: 'Australia/Melbourne',
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    }).format(new Date());
+    
+    return {
+        hijriLabel: `${estimatedHijriDate.day} ${estimatedHijriDate.month} ${estimatedHijriDate.year} AH`,
+        gregorianLabel: `${gregorianDate}`,
+        locationLabel: 'Melbourne, VIC',
+        isEstimated: estimatedHijriDate.isEstimated,
+    };
 }
