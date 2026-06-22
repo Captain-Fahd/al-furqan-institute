@@ -26,6 +26,23 @@ export type CalendarMonth = {
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+// Fixed labels so server (limited-ICU runtime) and client render identically — avoids
+// Intl locale drift that causes React hydration mismatches.
+const GREGORIAN_MONTHS_SHORT = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+]
+
 function toIso(date: Date): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -83,9 +100,8 @@ function buildDay(
 }
 
 function buildGregorianLabel(start: Date, end: Date): string {
-  const monthFmt = new Intl.DateTimeFormat('en-AU', { month: 'short' })
-  const startMonth = monthFmt.format(start)
-  const endMonth = monthFmt.format(end)
+  const startMonth = GREGORIAN_MONTHS_SHORT[start.getMonth()]
+  const endMonth = GREGORIAN_MONTHS_SHORT[end.getMonth()]
   const startYear = start.getFullYear()
   const endYear = end.getFullYear()
 
