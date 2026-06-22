@@ -69,6 +69,12 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    verdicts: Verdict;
+    'hijri-months': HijriMonth;
+    'sighting-reports': SightingReport;
+    trips: Trip;
+    announcements: Announcement;
+    subscribers: Subscriber;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,6 +84,12 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    verdicts: VerdictsSelect<false> | VerdictsSelect<true>;
+    'hijri-months': HijriMonthsSelect<false> | HijriMonthsSelect<true>;
+    'sighting-reports': SightingReportsSelect<false> | SightingReportsSelect<true>;
+    trips: TripsSelect<false> | TripsSelect<true>;
+    announcements: AnnouncementsSelect<false> | AnnouncementsSelect<true>;
+    subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -123,6 +135,7 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: number;
+  roles: ('admin' | 'editor')[];
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -162,6 +175,179 @@ export interface Media {
   focalY?: number | null;
 }
 /**
+ * Official moonsighting rulings for Melbourne. Publishing a sighted verdict confirms the Hijri month start.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "verdicts".
+ */
+export interface Verdict {
+  id: number;
+  hijriMonth:
+    | 'Muharram'
+    | 'Safar'
+    | "Rabi' I"
+    | "Rabi' II"
+    | 'Jumada I'
+    | 'Jumada II'
+    | 'Rajab'
+    | "Sha'ban"
+    | 'Ramadan'
+    | 'Shawwal'
+    | "Dhul-Qi'dah"
+    | 'Dhul-Hijjah';
+  /**
+   * Hijri (AH) year, e.g. 1447.
+   */
+  hijriYear: number;
+  /**
+   * The Gregorian date this Hijri month begins in Melbourne.
+   */
+  gregorianStartDate: string;
+  status: 'sighted' | 'not-sighted';
+  /**
+   * Verdicts are issued for Melbourne, Victoria, Australia.
+   */
+  region: 'melbourne';
+  /**
+   * Short public-facing note shown with the verdict.
+   */
+  summary?: string | null;
+  /**
+   * Set this to publish the verdict publicly. Leave empty to keep it as a draft.
+   */
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "hijri-months".
+ */
+export interface HijriMonth {
+  id: number;
+  name:
+    | 'Muharram'
+    | 'Safar'
+    | "Rabi' I"
+    | "Rabi' II"
+    | 'Jumada I'
+    | 'Jumada II'
+    | 'Rajab'
+    | "Sha'ban"
+    | 'Ramadan'
+    | 'Shawwal'
+    | "Dhul-Qi'dah"
+    | 'Dhul-Hijjah';
+  /**
+   * Hijri (AH) year, e.g. 1447.
+   */
+  year: number;
+  confirmedStartDate?: string | null;
+  /**
+   * On = confirmed by an official verdict. Off = estimated/upcoming.
+   */
+  isConfirmed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sighting-reports".
+ */
+export interface SightingReport {
+  id: number;
+  date: string;
+  /**
+   * Indonesian sightings are supporting evidence only; verdicts are Melbourne-local.
+   */
+  region: 'melbourne' | 'indonesia' | 'other';
+  observer: string;
+  method?: ('naked-eye' | 'optical-aid' | 'telescope') | null;
+  result: 'sighted' | 'not-sighted' | 'inconclusive';
+  /**
+   * Weather, visibility, horizon conditions.
+   */
+  conditions?: string | null;
+  /**
+   * Optional trip this report came from.
+   */
+  trip?: (number | null) | Trip;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "trips".
+ */
+export interface Trip {
+  id: number;
+  title: string;
+  scheduledDate: string;
+  sunsetTime?: string | null;
+  moonsetTime?: string | null;
+  location?: string | null;
+  attendees?:
+    | {
+        name: string;
+        id?: string | null;
+      }[]
+    | null;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  /**
+   * Summary of what happened on the trip.
+   */
+  outcome?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "announcements".
+ */
+export interface Announcement {
+  id: number;
+  title: string;
+  body: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  /**
+   * Set this to publish the announcement publicly. Leave empty to keep it as a draft.
+   */
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers".
+ */
+export interface Subscriber {
+  id: number;
+  email: string;
+  /**
+   * Set once the subscriber confirms (double opt-in).
+   */
+  confirmedAt?: string | null;
+  /**
+   * Auto-generated. Used in unsubscribe links.
+   */
+  unsubscribeToken?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -192,6 +378,30 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'verdicts';
+        value: number | Verdict;
+      } | null)
+    | ({
+        relationTo: 'hijri-months';
+        value: number | HijriMonth;
+      } | null)
+    | ({
+        relationTo: 'sighting-reports';
+        value: number | SightingReport;
+      } | null)
+    | ({
+        relationTo: 'trips';
+        value: number | Trip;
+      } | null)
+    | ({
+        relationTo: 'announcements';
+        value: number | Announcement;
+      } | null)
+    | ({
+        relationTo: 'subscribers';
+        value: number | Subscriber;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -240,6 +450,7 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  roles?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -274,6 +485,91 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "verdicts_select".
+ */
+export interface VerdictsSelect<T extends boolean = true> {
+  hijriMonth?: T;
+  hijriYear?: T;
+  gregorianStartDate?: T;
+  status?: T;
+  region?: T;
+  summary?: T;
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "hijri-months_select".
+ */
+export interface HijriMonthsSelect<T extends boolean = true> {
+  name?: T;
+  year?: T;
+  confirmedStartDate?: T;
+  isConfirmed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sighting-reports_select".
+ */
+export interface SightingReportsSelect<T extends boolean = true> {
+  date?: T;
+  region?: T;
+  observer?: T;
+  method?: T;
+  result?: T;
+  conditions?: T;
+  trip?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "trips_select".
+ */
+export interface TripsSelect<T extends boolean = true> {
+  title?: T;
+  scheduledDate?: T;
+  sunsetTime?: T;
+  moonsetTime?: T;
+  location?: T;
+  attendees?:
+    | T
+    | {
+        name?: T;
+        id?: T;
+      };
+  status?: T;
+  outcome?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "announcements_select".
+ */
+export interface AnnouncementsSelect<T extends boolean = true> {
+  title?: T;
+  body?: T;
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers_select".
+ */
+export interface SubscribersSelect<T extends boolean = true> {
+  email?: T;
+  confirmedAt?: T;
+  unsubscribeToken?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

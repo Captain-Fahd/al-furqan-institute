@@ -1,7 +1,8 @@
 import {toHijri} from 'hijri-date/lib/safe';
 import { HijriDateDisplay } from '@/lib/hijri/types';
+import { HIJRI_MONTHS } from '@/lib/hijri/constants';
 
-export const HIJRI_MONTHS = ['Muharram', 'Safar', 'Rabi\' I', 'Rabi\' II', 'Jumada I', 'Jumada II', 'Rajab', 'Sha\'ban', 'Ramadan', 'Shawwal', 'Dhul-Qi\'dah', 'Dhul-Hijjah']
+export { HIJRI_MONTHS };
 
 type HijriDateParts = {
     day: number,

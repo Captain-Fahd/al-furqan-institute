@@ -17,4 +17,109 @@ describe('API', () => {
     })
     expect(users).toBeDefined()
   })
+
+  it('persists editor role for non-first users', async () => {
+    const { totalDocs } = await payload.count({ collection: 'users' })
+
+    if (totalDocs === 0) {
+      await payload.create({
+        collection: 'users',
+        data: {
+          email: `bootstrap-${Date.now()}@example.com`,
+          password: 'test-password',
+          roles: ['admin'],
+        },
+      })
+    }
+
+    const email = `editor-${Date.now()}@example.com`
+
+    const user = await payload.create({
+      collection: 'users',
+      data: {
+        email,
+        password: 'test-password',
+        roles: ['editor'],
+      },
+    })
+
+    expect(user.roles).toEqual(['editor'])
+
+    await payload.delete({
+      collection: 'users',
+      id: user.id,
+    })
+  })
+
+  it('confirms a HijriMonth when a sighted verdict is published', async () => {
+    const hijriYear = 9000 + Math.floor(Math.random() * 1000)
+
+    const verdict = await payload.create({
+      collection: 'verdicts',
+      data: {
+        hijriMonth: 'Ramadan',
+        hijriYear,
+        gregorianStartDate: '2026-02-18T00:00:00.000Z',
+        status: 'sighted',
+        region: 'melbourne',
+        publishedAt: new Date().toISOString(),
+      },
+    })
+
+    const months = await payload.find({
+      collection: 'hijri-months',
+      where: {
+        and: [
+          { name: { equals: 'Ramadan' } },
+          { year: { equals: hijriYear } },
+        ],
+      },
+    })
+
+    expect(months.totalDocs).toBe(1)
+    expect(months.docs[0]?.isConfirmed).toBe(true)
+
+    await payload.delete({ collection: 'verdicts', id: verdict.id })
+    await payload.delete({ collection: 'hijri-months', id: months.docs[0]!.id })
+  })
+
+  it('does not confirm a HijriMonth for an unpublished verdict', async () => {
+    const hijriYear = 9000 + Math.floor(Math.random() * 1000)
+
+    const verdict = await payload.create({
+      collection: 'verdicts',
+      data: {
+        hijriMonth: 'Shawwal',
+        hijriYear,
+        gregorianStartDate: '2026-03-20T00:00:00.000Z',
+        status: 'sighted',
+        region: 'melbourne',
+      },
+    })
+
+    const months = await payload.find({
+      collection: 'hijri-months',
+      where: {
+        and: [
+          { name: { equals: 'Shawwal' } },
+          { year: { equals: hijriYear } },
+        ],
+      },
+    })
+
+    expect(months.totalDocs).toBe(0)
+
+    await payload.delete({ collection: 'verdicts', id: verdict.id })
+  })
+
+  it('auto-generates an unsubscribe token for new subscribers', async () => {
+    const subscriber = await payload.create({
+      collection: 'subscribers',
+      data: { email: `subscriber-${Date.now()}@example.com` },
+    })
+
+    expect(subscriber.unsubscribeToken).toBeTruthy()
+
+    await payload.delete({ collection: 'subscribers', id: subscriber.id })
+  })
 })

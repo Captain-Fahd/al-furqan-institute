@@ -64,12 +64,14 @@ cp .env.example .env   # set PAYLOAD_SECRET and other values
 docker compose up      # starts Postgres + dev server on :3000
 ```
 
+`docker-compose.yml` overrides `DATABASE_URL` to use the `postgres` service hostname inside the app container. Keep `localhost` in `.env` if you run the app on the host instead (below).
+
 Or run Postgres via Docker and the app locally:
 
 ```bash
 docker compose up postgres -d
 bun install
-bun run dev
+bun run dev            # uses DATABASE_URL=...@localhost:5432 from .env
 ```
 
 - Public site: [http://localhost:3000](http://localhost:3000)

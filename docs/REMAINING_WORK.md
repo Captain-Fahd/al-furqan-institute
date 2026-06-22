@@ -1,13 +1,13 @@
 ---
 name: Next Project Phases
-overview: Phase A foundation is mostly done (tooling, Hijri estimates, live prayer times, CI). Users RBAC is broken and blocks build/typecheck. Remaining work finishes Phase A, builds the Payload data model, wires email notifications, ships the public site around the verdict banner, and deploys to production — aligned with [AGENTS.md](AGENTS.md) and [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
+overview: Phase A foundation is nearly complete (tooling, Hijri estimates, live prayer times, CI, Users RBAC). Remaining Phase A work is Hijri helper polish and E2E coverage in CI. Next up — Payload data model (Phase B), email notifications, public site around the verdict banner, and production deploy — aligned with [AGENTS.md](AGENTS.md) and [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
 todos:
   - id: phase-a-foundation
-    content: "Phase A: Fix Users RBAC (blocks build), Hijri helper polish, E2E homepage assertions, wire E2E into CI"
+    content: "Phase A: Hijri helper polish, E2E homepage assertions, wire E2E into CI"
     status: in_progress
   - id: phase-b-collections
     content: "Phase B: All domain Payload collections + access control + Verdict→HijriMonth hook"
-    status: pending
+    status: completed
   - id: phase-c-email
     content: "Phase C: Resend adapter, subscribe/confirm/unsubscribe routes, verdict email blast"
     status: pending
@@ -36,14 +36,15 @@ isProject: false
 | Dev tooling (Bun, Docker, env template) | Done — [`.env.example`](.env.example), [`docker-compose.yml`](docker-compose.yml), `bun.lock` (no `package-lock.json`), Chakra providers under [`src/components/ui/`](src/components/ui/) |
 | GitHub Actions CI | Done ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) — lint, typecheck, unit + integration tests on Postgres; **E2E not in CI yet** |
 | Hijri unit tests | **7 passing** ([`tests/unit/`](tests/unit/)) — `gregorianToHijriParts`, `getMelbourneGregorianDate` |
-| Users RBAC | **Broken** — invalid `roles` / `saveToJWT` on [`Users.ts`](src/app/(payload)/collections/Users.ts) collection config; **`bun run build` and `bun run typecheck` fail** |
+| Users RBAC | **Done** — `roles` select field (`admin` \| `editor`) with `saveToJWT` on [`Users.ts`](src/app/(payload)/collections/Users.ts); shared access helpers in [`access/`](src/app/(payload)/access/); first-user bootstrap via [`assignAdminToFirstUser`](src/app/(payload)/hooks/assignAdminToFirstUser.ts); [`Media`](src/app/(payload)/collections/Media.ts) gated to admins/editors |
+| Build / typecheck | **Passing** — `bun run build` and `bun run typecheck` green |
+| Integration tests | **2 passing** ([`api.int.spec.ts`](tests/int/api.int.spec.ts)) — user fetch + editor role persistence |
+| E2E tests | **Local only** — homepage title ([`frontend.e2e.spec.ts`](tests/e2e/frontend.e2e.spec.ts)) + admin panel navigation ([`admin.e2e.spec.ts`](tests/e2e/admin.e2e.spec.ts)); not wired into CI |
 | Verdict-aware Hijri override | **Not started** — estimates only; confirmed months will come from Payload Verdicts (Phase B + D) |
-| Domain collections | **Not started** — only `Users` + `Media` registered in [`payload.config.ts`](src/app/(payload)/payload.config.ts) |
+| Domain collections | **Done (Phase B)** — `Verdicts`, `HijriMonths`, `SightingReports`, `Trips`, `Announcements`, `Subscribers` registered in [`payload.config.ts`](src/app/(payload)/payload.config.ts); access via shared helpers; Verdict→HijriMonth `afterChange` upsert wired |
 | Email / Resend | **Not started** — `RESEND_API_KEY` in `.env.example` only; no adapter or routes |
 | Public pages beyond `/` | **Not started** — nav links to `/calendar`, `/trips`, `/reports`, `/about`, `/subscribe` all 404 |
 | Deploy | **Not started** |
-
-**Blocker:** Fix Users RBAC before CI can go green on typecheck/build.
 
 ```mermaid
 flowchart LR
@@ -53,9 +54,10 @@ flowchart LR
     HijriEstimate[Hijri estimate display]
     PrayerTimes[Live prayer times]
     Tooling[Bun + Docker + CI]
+    RBAC[Users RBAC + access control]
   end
   subgraph next [Next]
-    Foundation[Phase A: RBAC fix + polish]
+    Foundation[Phase A: polish + E2E]
     DataModel[Phase B: Data model]
     Email[Phase C: Email]
     PublicCore[Phase D: Public core]
@@ -67,6 +69,7 @@ flowchart LR
   HijriEstimate --> DataModel
   PrayerTimes --> Foundation
   Tooling --> Foundation
+  RBAC --> DataModel
   Foundation --> DataModel
   DataModel --> Email
   DataModel --> PublicCore
@@ -104,12 +107,19 @@ flowchart LR
 - Vitest include glob: `tests/unit/**/*.spec.ts` and `tests/int/**/*.int.spec.ts`.
 - **GitHub Actions CI** — lint, typecheck, build + unit tests, build + integration tests ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
+**Admin auth (RBAC)**
+
+- **`roles` select field** on Users (`admin` \| `editor`, `hasMany`, `saveToJWT: true`, default `editor`) in [`Users.ts`](src/app/(payload)/collections/Users.ts).
+- **Shared access helpers** — [`access/roles.ts`](src/app/(payload)/access/roles.ts) (`isAdmin`, `isAdminOrEditor`, `USER_ROLES`) and [`access/index.ts`](src/app/(payload)/access/index.ts) (`adminOnly`, `adminsOrSelf`, `allowFirstUserCreate`, etc.).
+- **First-user bootstrap** — [`assignAdminToFirstUser`](src/app/(payload)/hooks/assignAdminToFirstUser.ts) hook assigns `admin` when `totalDocs === 0`; [`allowFirstUserCreate`](src/app/(payload)/access/index.ts) permits unauthenticated create only for the first user.
+- **Role field access** — only admins can read/update the `roles` field on other users.
+- **Media access** — admins and editors can create/update/delete; public read for uploads.
+- **Types generated** — `User.roles` in [`payload-types.ts`](src/app/(payload)/payload-types.ts).
+- **Integration test** — editor role persistence in [`api.int.spec.ts`](tests/int/api.int.spec.ts).
+- **E2E admin tests** — login, dashboard, users list/create via [`admin.e2e.spec.ts`](tests/e2e/admin.e2e.spec.ts) with [`seedUser`](tests/helpers/seedUser.ts) helper.
+
 ### Remaining
 
-- **Admin auth (RBAC)** — **fix broken config** in [`Users.ts`](src/app/(payload)/collections/Users.ts):
-  - Remove invalid top-level `roles` / `saveToJWT` properties (they are not `CollectionConfig` fields and cause TS errors).
-  - Add a `roles` **select field** (`admin` | `editor`) with `saveToJWT: true` on the field, plus access control so only admins can change roles (per [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)).
-  - Re-run `bun run generate:types` and confirm `User` type includes `roles`.
 - **Hijri polish**
   - Consolidate duplicate `getMelbourneToday` / `getMelbourneGregorianDate` helpers in `hijriDate.ts` (same logic, two implementations).
   - Optionally move logic from `controllers/hijriDate.ts` → `src/lib/hijri/estimate.ts` + `format.ts`; align month spellings with future Payload Verdict select (`Rabi' I` vs `Rabi'I`).
@@ -119,13 +129,19 @@ flowchart LR
   - Add E2E job to CI (or document why it stays local-only until a stable test DB seed exists).
   - Keep integration test pattern in [`api.int.spec.ts`](tests/int/api.int.spec.ts).
 
-**Exit criteria:** `bun run dev` + `bun run build` + `bun run typecheck` pass; `bun run test:unit` green; admin user with roles works; hero shows live estimated Hijri date.
+**Exit criteria:** `bun run dev` + `bun run build` + `bun run typecheck` pass; `bun run test:unit` green; admin user with roles works; hero shows live estimated Hijri date; E2E asserts Hijri display and runs in CI.
 
 ---
 
-## Phase B — Data model (original Phase 2)
+## Phase B — Data model (original Phase 2) ✅ Done
 
 **Goal:** Full CMS for non-technical staff; public read access for published content.
+
+**Status:** All six collections implemented and registered; types generated; `bun run build` +
+`bun run typecheck` green; integration tests cover the Verdict→HijriMonth hook and subscriber
+token generation (5 passing). `read` is public for content and gated on `publishedAt` for
+Verdicts/Announcements via [`publishedOrEditors`](src/app/(payload)/access/index.ts); Subscribers
+are admin-read-only. Shared month list lives in [`constants.ts`](src/lib/hijri/constants.ts).
 
 Add collections under [`src/app/(payload)/collections/`](src/app/(payload)/collections/), register in [`payload.config.ts`](src/app/(payload)/payload.config.ts), run `bun run generate:types`.
 
@@ -141,7 +157,7 @@ Add collections under [`src/app/(payload)/collections/`](src/app/(payload)/colle
 **Access control pattern:**
 
 - Published content: `read` public (filter `publishedAt` not null where applicable).
-- `create` / `update` / `delete`: authenticated `admin` or `editor`.
+- `create` / `update` / `delete`: authenticated `admin` or `editor` — reuse helpers from [`access/`](src/app/(payload)/access/).
 - Subscribers: no public read; public create only via dedicated API route (Phase C).
 
 **Verdict hook (stub):** `afterChange` on first publish → upsert matching `HijriMonth` with `isConfirmed: true`; call email sender when Phase C is wired.
@@ -229,4 +245,4 @@ Build server-component pages fetching via Local API; reuse shared card/list patt
 
 Work strictly in phase order **A → B → C → D → E → F**. Phase C and D can overlap slightly once B is done (verdict hook stub in B, email wiring in C, frontend in D), but **do not ship the public verdict banner before B** — it must read real verdicts, not placeholders.
 
-**Next concrete tasks:** Fix Users RBAC (unblocks build/CI) → Hijri helper consolidation + E2E Hijri assertion → Phase B Verdicts collection with shared `HIJRI_MONTHS` → Phase D verdict override resolver on top of the existing estimate layer.
+**Next concrete tasks:** Hijri helper consolidation + E2E Hijri assertion + CI E2E job → Phase B Verdicts collection with shared `HIJRI_MONTHS` → Phase D verdict override resolver on top of the existing estimate layer.
