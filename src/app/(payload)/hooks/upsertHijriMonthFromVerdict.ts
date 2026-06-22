@@ -56,7 +56,5 @@ export const upsertHijriMonthFromVerdict: CollectionAfterChangeHook = async ({
     })
   }
 
-  // TODO(Phase C): email confirmed subscribers when the verdict is first published.
-
   return doc
 }

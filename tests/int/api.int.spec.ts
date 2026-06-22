@@ -112,13 +112,44 @@ describe('API', () => {
     await payload.delete({ collection: 'verdicts', id: verdict.id })
   })
 
-  it('auto-generates an unsubscribe token for new subscribers', async () => {
+  it('auto-generates confirm + unsubscribe tokens for new subscribers', async () => {
     const subscriber = await payload.create({
       collection: 'subscribers',
       data: { email: `subscriber-${Date.now()}@example.com` },
     })
 
+    expect(subscriber.confirmToken).toBeTruthy()
     expect(subscriber.unsubscribeToken).toBeTruthy()
+    expect(subscriber.confirmToken).not.toBe(subscriber.unsubscribeToken)
+    expect(subscriber.confirmedAt).toBeFalsy()
+
+    await payload.delete({ collection: 'subscribers', id: subscriber.id })
+  })
+
+  it('confirms a subscriber by their confirm token (double opt-in)', async () => {
+    const subscriber = await payload.create({
+      collection: 'subscribers',
+      data: { email: `optin-${Date.now()}@example.com` },
+    })
+
+    expect(subscriber.confirmedAt).toBeFalsy()
+    const token = subscriber.confirmToken!
+
+    // Mirrors the /confirm page: look up by token, then set confirmedAt.
+    const { docs } = await payload.find({
+      collection: 'subscribers',
+      where: { confirmToken: { equals: token } },
+      limit: 1,
+    })
+    expect(docs).toHaveLength(1)
+
+    const confirmed = await payload.update({
+      collection: 'subscribers',
+      id: docs[0]!.id,
+      data: { confirmedAt: new Date().toISOString() },
+    })
+
+    expect(confirmed.confirmedAt).toBeTruthy()
 
     await payload.delete({ collection: 'subscribers', id: subscriber.id })
   })

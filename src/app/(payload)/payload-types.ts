@@ -341,6 +341,10 @@ export interface Subscriber {
    */
   confirmedAt?: string | null;
   /**
+   * Auto-generated. Used in double opt-in confirmation links.
+   */
+  confirmToken?: string | null;
+  /**
    * Auto-generated. Used in unsubscribe links.
    */
   unsubscribeToken?: string | null;
@@ -567,6 +571,7 @@ export interface AnnouncementsSelect<T extends boolean = true> {
 export interface SubscribersSelect<T extends boolean = true> {
   email?: T;
   confirmedAt?: T;
+  confirmToken?: T;
   unsubscribeToken?: T;
   updatedAt?: T;
   createdAt?: T;

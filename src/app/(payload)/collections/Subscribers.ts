@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { adminOnly, adminPanelAdminsOrEditors, adminsOrEditors } from '../access'
-import { ensureUnsubscribeToken } from '../hooks/ensureUnsubscribeToken'
+import { ensureSubscriberTokens } from '../hooks/ensureSubscriberTokens'
 
 /**
  * Email subscribers (PII). No public read. Public sign-up arrives in Phase C
@@ -21,7 +21,7 @@ export const Subscribers: CollectionConfig = {
     delete: adminOnly,
   },
   hooks: {
-    beforeChange: [ensureUnsubscribeToken],
+    beforeChange: [ensureSubscriberTokens],
   },
   fields: [
     {
@@ -37,6 +37,16 @@ export const Subscribers: CollectionConfig = {
       admin: {
         description: 'Set once the subscriber confirms (double opt-in).',
         date: { pickerAppearance: 'dayAndTime' },
+      },
+    },
+    {
+      name: 'confirmToken',
+      type: 'text',
+      unique: true,
+      index: true,
+      admin: {
+        readOnly: true,
+        description: 'Auto-generated. Used in double opt-in confirmation links.',
       },
     },
     {

@@ -6,6 +6,7 @@ import {
   adminsOrEditors,
   publishedOrEditors,
 } from '../access'
+import { notifySubscribersOnVerdict } from '../hooks/notifySubscribersOnVerdict'
 import { upsertHijriMonthFromVerdict } from '../hooks/upsertHijriMonthFromVerdict'
 
 const hijriMonthOptions = HIJRI_MONTHS.map((month) => ({
@@ -33,7 +34,7 @@ export const Verdicts: CollectionConfig = {
     delete: adminsOrEditors,
   },
   hooks: {
-    afterChange: [upsertHijriMonthFromVerdict],
+    afterChange: [upsertHijriMonthFromVerdict, notifySubscribersOnVerdict],
   },
   fields: [
     {

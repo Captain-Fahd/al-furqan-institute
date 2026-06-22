@@ -1,4 +1,5 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
+import { resendAdapter } from '@payloadcms/email-resend'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
@@ -16,6 +17,19 @@ import { Subscribers } from './collections/Subscribers'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+/**
+ * Only wire the Resend adapter when an API key is present. Without it (local
+ * dev, CI) Payload falls back to its built-in console transport so
+ * `payload.sendEmail` logs instead of throwing.
+ */
+const email = process.env.RESEND_API_KEY
+  ? resendAdapter({
+      defaultFromAddress: process.env.EMAIL_FROM || 'noreply@alfurqan.institute',
+      defaultFromName: 'Al-Furqan Institute',
+      apiKey: process.env.RESEND_API_KEY,
+    })
+  : undefined
 
 export default buildConfig({
   admin: {
@@ -35,6 +49,7 @@ export default buildConfig({
     Subscribers,
   ],
   editor: lexicalEditor(),
+  email,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

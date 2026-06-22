@@ -10,7 +10,7 @@ todos:
     status: completed
   - id: phase-c-email
     content: "Phase C: Resend adapter, subscribe/confirm/unsubscribe routes, verdict email blast"
-    status: pending
+    status: completed
   - id: phase-d-homepage
     content: "Phase D: Payload data layer, verdict override resolver, verdict banner, homepage + /subscribe"
     status: pending
@@ -42,7 +42,7 @@ isProject: false
 | E2E tests | **Local only** — homepage title ([`frontend.e2e.spec.ts`](tests/e2e/frontend.e2e.spec.ts)) + admin panel navigation ([`admin.e2e.spec.ts`](tests/e2e/admin.e2e.spec.ts)); not wired into CI |
 | Verdict-aware Hijri override | **Not started** — estimates only; confirmed months will come from Payload Verdicts (Phase B + D) |
 | Domain collections | **Done (Phase B)** — `Verdicts`, `HijriMonths`, `SightingReports`, `Trips`, `Announcements`, `Subscribers` registered in [`payload.config.ts`](src/app/(payload)/payload.config.ts); access via shared helpers; Verdict→HijriMonth `afterChange` upsert wired |
-| Email / Resend | **Not started** — `RESEND_API_KEY` in `.env.example` only; no adapter or routes |
+| Email / Resend | **Done (Phase C)** — conditional `resendAdapter` in [`payload.config.ts`](src/app/(payload)/payload.config.ts) (console fallback when no key); React Email templates + send helpers in [`src/lib/email/`](src/lib/email/); double opt-in via `POST /api/subscribe` → `/confirm` → `/unsubscribe`; verdict blast to confirmed subscribers on first publish ([`notifySubscribersOnVerdict`](src/app/(payload)/hooks/notifySubscribersOnVerdict.ts)) |
 | Public pages beyond `/` | **Not started** — nav links to `/calendar`, `/trips`, `/reports`, `/about`, `/subscribe` all 404 |
 | Deploy | **Not started** |
 
@@ -168,19 +168,34 @@ Add collections under [`src/app/(payload)/collections/`](src/app/(payload)/colle
 
 ---
 
-## Phase C — Email notifications (original Phase 3)
+## Phase C — Email notifications (original Phase 3) ✅ Done
 
 **Goal:** Double opt-in subscriptions and verdict blast on publish.
 
-- Add `@payloadcms/email-resend` + `resend` to dependencies; configure adapter in `payload.config.ts`.
-- **`src/lib/email/`** — React Email templates: confirmation, verdict notification (with unsubscribe link).
-- **Public routes:**
-  - `POST /api/subscribe` — create pending subscriber, send confirmation.
-  - `GET /confirm?token=…` — set `confirmedAt`.
-  - `GET /unsubscribe?token=…` — remove/deactivate subscriber.
-- **Verdict blast:** complete the `afterChange` hook — query `confirmedAt != null` subscribers, send via Resend.
+**Status:** Implemented and green (`bun run build` + `typecheck`; 6 integration tests, 7 unit
+tests). `RESEND_API_KEY`-gated adapter so local dev/CI fall back to Payload's console transport.
 
-**Exit criteria:** Test email flow end-to-end locally; publishing a verdict emails confirmed subscribers only.
+- **Adapter** — `@payloadcms/email-resend` + `resend` + `@react-email/{components,render}` added.
+  Conditional `resendAdapter` in [`payload.config.ts`](src/app/(payload)/payload.config.ts)
+  (`defaultFromAddress` ← `EMAIL_FROM`, default `noreply@alfurqan.institute`); `email` left
+  `undefined` when no key so `payload.sendEmail` logs instead of throwing.
+- **`src/lib/email/`** — React Email templates [`ConfirmationEmail.tsx`](src/lib/email/templates/ConfirmationEmail.tsx)
+  + [`VerdictEmail.tsx`](src/lib/email/templates/VerdictEmail.tsx) (with unsubscribe link);
+  [`send.ts`](src/lib/email/send.ts) renders to HTML + dispatches via `payload.sendEmail`;
+  [`urls.ts`](src/lib/email/urls.ts) / [`format.ts`](src/lib/email/format.ts) helpers (Melbourne dates).
+- **Subscriber tokens** — added `confirmToken` (separate from `unsubscribeToken`);
+  [`ensureSubscriberTokens`](src/app/(payload)/hooks/ensureSubscriberTokens.ts) generates both on create.
+- **Public routes / pages:**
+  - `POST /api/subscribe` ([route](src/app/(frontend)/api/subscribe/route.ts)) — create/reuse a
+    pending subscriber via Local API + send confirmation; generic response (no enumeration).
+  - `/confirm?token=…` ([page](src/app/(frontend)/confirm/page.tsx)) — sets `confirmedAt`; styled Chakra result.
+  - `/unsubscribe?token=…` ([page](src/app/(frontend)/unsubscribe/page.tsx)) — **deletes** the record (per decision); styled result.
+- **Verdict blast** — [`notifySubscribersOnVerdict`](src/app/(payload)/hooks/notifySubscribersOnVerdict.ts)
+  `afterChange` hook fires only on the publish transition (empty → set `publishedAt`), for both
+  sighted and not-sighted verdicts; emails **confirmed-only** subscribers (`confirmedAt` exists),
+  paginated, with per-recipient unsubscribe links and per-recipient error isolation.
+
+**Exit criteria:** ✅ Flow runs locally (console transport without a key); publishing a verdict emails confirmed subscribers only. Remaining for Phase F: real `RESEND_API_KEY` + SPF/DKIM on the institute domain.
 
 ---
 
