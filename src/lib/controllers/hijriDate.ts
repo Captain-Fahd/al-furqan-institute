@@ -30,7 +30,7 @@ export function gregorianToHijriParts(gregorianDate: {year: number, month: numbe
         day: hijriDate.getDate(),
         month: HIJRI_MONTHS[hijriDate.getMonth() - 1],
         year: hijriDate.getFullYear(),
-        isEstimated: false,
+        isEstimated: true,
     }
 }
 

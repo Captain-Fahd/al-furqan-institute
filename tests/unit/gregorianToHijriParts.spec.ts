@@ -23,9 +23,9 @@ describe('gregorianToHijriParts', () => {
 })
 })
 describe('gregorianToHijriParts', () => {
-  it('should return 2 Ramadan 1446 hijri date parts for 21 March 2025', () => {
+  it('should return 22 Ramadan 1446 hijri date parts for 21 March 2025', () => {
     expect(gregorianToHijriParts({year: 2025, month: 3, day: 21})).toEqual({
-      day: 2,
+      day: 22,
       month: 'Ramadan',
       year: 1446,
       isEstimated: true,
