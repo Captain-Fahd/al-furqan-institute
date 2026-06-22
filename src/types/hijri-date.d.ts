@@ -5,6 +5,8 @@ declare module 'hijri-date/lib/safe' {
     getFullYear(): number
     getMonth(): number
     getDate(): number
+    getDay(): number
+    toGregorian(): Date
     format(template?: string, locale?: string): string
   }
 
