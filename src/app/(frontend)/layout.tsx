@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { Footer } from '@/components/layout/Footer'
 import { Navbar } from '@/components/nav/Navbar'
 import { Provider } from '@/components/ui/provider'
 import { googleSans } from '@/lib/fonts'
@@ -19,6 +20,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
         <Provider>
           <Navbar />
           {children}
+          <Footer />
         </Provider>
       </body>
     </html>

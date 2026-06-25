@@ -1,9 +1,9 @@
 ---
 name: Next Project Phases
-overview: Phase A foundation is nearly complete (tooling, Hijri estimates, live prayer times, CI, Users RBAC). Remaining Phase A work is Hijri helper polish and E2E coverage in CI. Next up — Payload data model (Phase B), email notifications, public site around the verdict banner, and production deploy — aligned with [AGENTS.md](AGENTS.md) and [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
+overview: Phase A foundation is nearly complete (tooling, Hijri estimates, live prayer times, CI, Users RBAC, local E2E). Remaining Phase A work is Hijri helper dedup/polish and E2E coverage in CI. Phases B, C, and D are implemented — the homepage now reads live Payload data, flips the Hijri date from estimate to confirmed on a published verdict, leads with a verdict banner, and has a working /subscribe page. Next up — remaining public routes (Phase E) and production deploy (Phase F) — aligned with [AGENTS.md](AGENTS.md) and [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
 todos:
   - id: phase-a-foundation
-    content: "Phase A: Hijri helper polish, E2E homepage assertions, wire E2E into CI"
+    content: "Phase A: Hijri helper dedup/polish, E2E homepage assertions, wire E2E into CI"
     status: in_progress
   - id: phase-b-collections
     content: "Phase B: All domain Payload collections + access control + Verdict→HijriMonth hook"
@@ -13,7 +13,7 @@ todos:
     status: completed
   - id: phase-d-homepage
     content: "Phase D: Payload data layer, verdict override resolver, verdict banner, homepage + /subscribe"
-    status: pending
+    status: completed
   - id: phase-e-pages
     content: "Phase E: /calendar, /trips, /reports, /verdicts, /about"
     status: pending
@@ -31,19 +31,22 @@ isProject: false
 | --- | --- |
 | Payload + Next.js + Postgres adapter | Done ([`payload.config.ts`](src/app/(payload)/payload.config.ts)) |
 | Chakra UI, brand theme, layout, navbar | Done ([`theme.ts`](src/components/theme.ts), [`Navbar.tsx`](src/components/nav/Navbar.tsx)) |
-| Homepage hero — Hijri date | **Live estimates** via `hijri-date`, Melbourne timezone ([`hijriDate.ts`](src/lib/controllers/hijriDate.ts) → [`hijri.ts`](src/lib/hijri/hijri.ts) → [`HeroBrand.tsx`](src/components/hero/HeroBrand.tsx)); shows "Estimated · month start pending verdict" |
+| Homepage hero — Hijri date | **Verdict-aware (Phase D)** — [`resolveHijriDateDisplay`](src/lib/hijri/resolve.ts) prefers the latest published Melbourne `sighted` verdict and flips `isEstimated` to `false` when one covers today; falls back to the `hijri-date` estimate otherwise ([`HeroBrand.tsx`](src/components/hero/HeroBrand.tsx)) |
+| Homepage verdict banner | **Done (Phase D)** — most prominent element via [`VerdictBanner.tsx`](src/components/verdict/VerdictBanner.tsx): sighted / not-sighted / awaiting-verdict states, summary + published timestamp |
 | Homepage hero — prayer times | **Live** via Al-Adhan API ([`prayerTimesController.ts`](src/lib/controllers/prayerTimesController.ts) → [`/api/prayer-times`](src/app/(frontend)/api/prayer-times/route.ts) → [`PrayerTimesPanel.tsx`](src/components/hero/PrayerTimesPanel.tsx)) |
+| Homepage calendar section | **Partial / estimate-only** — [`CalendarSection.tsx`](src/components/calendar/CalendarSection.tsx) + [`MonthCalendar.tsx`](src/components/calendar/MonthCalendar.tsx) use [`calendar.ts`](src/lib/hijri/calendar.ts); embedded on `/`, not a `/calendar` route and not yet verdict-aware |
+| Homepage live content | **Done (Phase D)** — next trip + recent announcements + subscribe CTA read from Payload via [`content.ts`](src/lib/content.ts) / [`payload.ts`](src/lib/payload.ts); shared footer + per-page SEO metadata |
 | Dev tooling (Bun, Docker, env template) | Done — [`.env.example`](.env.example), [`docker-compose.yml`](docker-compose.yml), `bun.lock` (no `package-lock.json`), Chakra providers under [`src/components/ui/`](src/components/ui/) |
 | GitHub Actions CI | Done ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) — lint, typecheck, unit + integration tests on Postgres; **E2E not in CI yet** |
 | Hijri unit tests | **7 passing** ([`tests/unit/`](tests/unit/)) — `gregorianToHijriParts`, `getMelbourneGregorianDate` |
 | Users RBAC | **Done** — `roles` select field (`admin` \| `editor`) with `saveToJWT` on [`Users.ts`](src/app/(payload)/collections/Users.ts); shared access helpers in [`access/`](src/app/(payload)/access/); first-user bootstrap via [`assignAdminToFirstUser`](src/app/(payload)/hooks/assignAdminToFirstUser.ts); [`Media`](src/app/(payload)/collections/Media.ts) gated to admins/editors |
 | Build / typecheck | **Passing** — `bun run build` and `bun run typecheck` green |
-| Integration tests | **2 passing** ([`api.int.spec.ts`](tests/int/api.int.spec.ts)) — user fetch + editor role persistence |
+| Integration tests | **6 passing** ([`api.int.spec.ts`](tests/int/api.int.spec.ts)) — users/RBAC, Verdict→HijriMonth hook, subscriber token generation, double opt-in confirmation |
 | E2E tests | **Local only** — homepage title ([`frontend.e2e.spec.ts`](tests/e2e/frontend.e2e.spec.ts)) + admin panel navigation ([`admin.e2e.spec.ts`](tests/e2e/admin.e2e.spec.ts)); not wired into CI |
 | Verdict-aware Hijri override | **Not started** — estimates only; confirmed months will come from Payload Verdicts (Phase B + D) |
 | Domain collections | **Done (Phase B)** — `Verdicts`, `HijriMonths`, `SightingReports`, `Trips`, `Announcements`, `Subscribers` registered in [`payload.config.ts`](src/app/(payload)/payload.config.ts); access via shared helpers; Verdict→HijriMonth `afterChange` upsert wired |
 | Email / Resend | **Done (Phase C)** — conditional `resendAdapter` in [`payload.config.ts`](src/app/(payload)/payload.config.ts) (console fallback when no key); React Email templates + send helpers in [`src/lib/email/`](src/lib/email/); double opt-in via `POST /api/subscribe` → `/confirm` → `/unsubscribe`; verdict blast to confirmed subscribers on first publish ([`notifySubscribersOnVerdict`](src/app/(payload)/hooks/notifySubscribersOnVerdict.ts)) |
-| Public pages beyond `/` | **Not started** — nav links to `/calendar`, `/trips`, `/reports`, `/about`, `/subscribe` all 404 |
+| Public pages beyond `/` | **Partial** — `/subscribe` (Phase D), `/confirm`, `/unsubscribe`, and `POST /api/subscribe` exist; nav links to `/calendar`, `/trips`, `/reports`, `/about` still 404 (Phase E) |
 | Deploy | **Not started** |
 
 ```mermaid
@@ -55,25 +58,29 @@ flowchart LR
     PrayerTimes[Live prayer times]
     Tooling[Bun + Docker + CI]
     RBAC[Users RBAC + access control]
+    Collections[Payload collections]
+    EmailFlow[Email notifications]
+    PublicCore[Phase D: Public core]
+  end
+  subgraph partial [Partial]
+    CalendarPrep[Estimate-only homepage calendar]
   end
   subgraph next [Next]
     Foundation[Phase A: polish + E2E]
-    DataModel[Phase B: Data model]
-    Email[Phase C: Email]
-    PublicCore[Phase D: Public core]
     PublicPages[Phase E: Remaining pages]
     Launch[Phase F: Launch]
   end
   Scaffold --> Foundation
   HeroUI --> Foundation
-  HijriEstimate --> DataModel
   PrayerTimes --> Foundation
   Tooling --> Foundation
-  RBAC --> DataModel
-  Foundation --> DataModel
-  DataModel --> Email
-  DataModel --> PublicCore
-  Email --> PublicCore
+  RBAC --> Collections
+  HijriEstimate --> PublicCore
+  Collections --> EmailFlow
+  CalendarPrep --> PublicPages
+  Foundation --> PublicCore
+  Collections --> PublicCore
+  EmailFlow --> PublicCore
   PublicCore --> PublicPages
   PublicPages --> Launch
 ```
@@ -89,9 +96,11 @@ flowchart LR
 **Hijri Step 1 — estimate fallback**
 
 - **`hijri-date` library** integrated with TypeScript shim ([`src/types/hijri-date.d.ts`](src/types/hijri-date.d.ts)).
-- **Melbourne-anchored conversion** — `getMelbourneGregorianDate()`, `gregorianToHijriParts()`, exported `HIJRI_MONTHS` in [`hijriDate.ts`](src/lib/controllers/hijriDate.ts).
+- **Melbourne-anchored conversion** — `getMelbourneGregorianDate()`, `gregorianToHijriParts()` in [`hijriDate.ts`](src/lib/controllers/hijriDate.ts); shared `HIJRI_MONTHS` in [`constants.ts`](src/lib/hijri/constants.ts).
 - **Hero display wired** — `getFormattedHijriDate()` → `getHijriDateDisplay()` ([`src/lib/hijri/`](src/lib/hijri/)) shows live estimated Hijri + Gregorian labels with `isEstimated: true`.
 - **Unit tests** — [`gregorianToHijriParts.spec.ts`](tests/unit/gregorianToHijriParts.spec.ts), [`getMelbourneGregorianDate.spec.ts`](tests/unit/getMelbourneGregorianDate.spec.ts); `bun run test:unit` passes (7 tests).
+- **Month spellings aligned** — Payload `Verdicts` and Hijri helpers import the same [`HIJRI_MONTHS`](src/lib/hijri/constants.ts) values (`Rabi' I`, `Rabi' II`, etc.).
+- **Estimate-only calendar building blocks** — [`calendar.ts`](src/lib/hijri/calendar.ts), [`CalendarSection.tsx`](src/components/calendar/CalendarSection.tsx), [`MonthCalendar.tsx`](src/components/calendar/MonthCalendar.tsx) render a Hijri/Gregorian month grid on the homepage.
 
 **Prayer times**
 
@@ -121,8 +130,8 @@ flowchart LR
 ### Remaining
 
 - **Hijri polish**
-  - Consolidate duplicate `getMelbourneToday` / `getMelbourneGregorianDate` helpers in `hijriDate.ts` (same logic, two implementations).
-  - Optionally move logic from `controllers/hijriDate.ts` → `src/lib/hijri/estimate.ts` + `format.ts`; align month spellings with future Payload Verdict select (`Rabi' I` vs `Rabi'I`).
+  - Consolidate duplicate Melbourne date helpers in [`hijriDate.ts`](src/lib/controllers/hijriDate.ts) and [`calendar.ts`](src/lib/hijri/calendar.ts) (`getMelbourneGregorianDate` / `getMelbourneToday`).
+  - Optionally move logic from `controllers/hijriDate.ts` → `src/lib/hijri/estimate.ts` + `format.ts`.
   - Add remaining unit tests: `getFormattedHijriDate` with fake timers, `getHijriDateDisplay` passthrough.
 - **Tests**
   - Update E2E to assert live Hijri line on homepage (currently only checks page title in [`frontend.e2e.spec.ts`](tests/e2e/frontend.e2e.spec.ts)).
@@ -139,11 +148,11 @@ flowchart LR
 
 **Status:** All six collections implemented and registered; types generated; `bun run build` +
 `bun run typecheck` green; integration tests cover the Verdict→HijriMonth hook and subscriber
-token generation (5 passing). `read` is public for content and gated on `publishedAt` for
+token generation / confirmation (6 passing total). `read` is public for content and gated on `publishedAt` for
 Verdicts/Announcements via [`publishedOrEditors`](src/app/(payload)/access/index.ts); Subscribers
 are admin-read-only. Shared month list lives in [`constants.ts`](src/lib/hijri/constants.ts).
 
-Add collections under [`src/app/(payload)/collections/`](src/app/(payload)/collections/), register in [`payload.config.ts`](src/app/(payload)/payload.config.ts), run `bun run generate:types`.
+Collections live under [`src/app/(payload)/collections/`](src/app/(payload)/collections/), are registered in [`payload.config.ts`](src/app/(payload)/payload.config.ts), and generated types are checked in.
 
 | Collection | Key fields | Notes |
 | --- | --- | --- |
@@ -160,11 +169,11 @@ Add collections under [`src/app/(payload)/collections/`](src/app/(payload)/colle
 - `create` / `update` / `delete`: authenticated `admin` or `editor` — reuse helpers from [`access/`](src/app/(payload)/access/).
 - Subscribers: no public read; public create only via dedicated API route (Phase C).
 
-**Verdict hook (stub):** `afterChange` on first publish → upsert matching `HijriMonth` with `isConfirmed: true`; call email sender when Phase C is wired.
+**Verdict hook:** `afterChange` on publish of a `sighted` Verdict upserts the matching `HijriMonth` with `isConfirmed: true`; Phase C email hook is wired separately on first publish.
 
-**Shared constants:** Reuse exported `HIJRI_MONTHS` from [`hijriDate.ts`](src/lib/controllers/hijriDate.ts) (or `src/lib/hijri/constants.ts`) for the Verdict `hijriMonth` select field.
+**Shared constants:** `HIJRI_MONTHS` lives in [`constants.ts`](src/lib/hijri/constants.ts) and is reused by the Verdict `hijriMonth` select field and Hijri display helpers.
 
-**Exit criteria:** Staff can log into `/admin`, create a Trip + SightingReport (Melbourne + Indonesia) + Verdict; `HijriMonth` reflects the verdict.
+**Exit criteria:** ✅ Staff can log into `/admin`, create a Trip + SightingReport (Melbourne + Indonesia) + Verdict; `HijriMonth` reflects a published sighted verdict.
 
 ---
 
@@ -197,24 +206,43 @@ tests). `RESEND_API_KEY`-gated adapter so local dev/CI fall back to Payload's co
 
 **Exit criteria:** ✅ Flow runs locally (console transport without a key); publishing a verdict emails confirmed subscribers only. Remaining for Phase F: real `RESEND_API_KEY` + SPF/DKIM on the institute domain.
 
+**Known gap:** No automated test currently asserts the verdict blast email path end-to-end.
+
 ---
 
-## Phase D — Public site core (homepage + data layer)
+## Phase D — Public site core (homepage + data layer) ✅ Done
 
 **Goal:** Deliver the "is tomorrow Eid?" moment — the highest-priority requirement from [AGENTS.md](AGENTS.md).
 
-- **`src/lib/payload.ts`** — `getPayload()` helper for server components (Payload Local API).
-- **`src/lib/hijri/resolve.ts`** — verdict-aware resolver: query latest published Melbourne `sighted` Verdict; override estimate month/year/day; set `isEstimated: false` when a covering verdict exists.
-- **`src/lib/dates.ts`** — Melbourne timezone formatting; Indonesian report times labeled with their zone.
-- **Homepage [`page.tsx`](src/app/(frontend)/page.tsx)** — extend beyond hero:
-  1. **Latest verdict banner** — most prominent element: *Sighted / Not sighted → month begins [date]*, timestamped.
-  2. Next upcoming trip (if any).
-  3. Recent announcements.
-  4. Email signup CTA (links to `/subscribe` — navbar already points here).
-- **`/subscribe`** — signup form + success/pending states.
-- **Shared layout** — footer, page-level SEO metadata, mobile-first spacing under fixed navbar.
+**Status:** Implemented and green (`bun run build` + `typecheck` + `lint`; 7 unit tests). Homepage
+is `force-dynamic` and reads live Payload data; `/subscribe` prerenders as a static page.
 
-**Exit criteria:** Homepage reads live data from Payload; Hijri line flips from estimated to confirmed when a verdict is published; verdict banner is unambiguous on a phone at night; subscribe flow works.
+- **[`src/lib/payload.ts`](src/lib/payload.ts)** — cached `getPayloadClient()` helper for server
+  components / route handlers; `/api/subscribe`, `/confirm`, `/unsubscribe` refactored onto it.
+- **[`src/lib/hijri/resolve.ts`](src/lib/hijri/resolve.ts)** — verdict-aware resolver: latest
+  published Melbourne `sighted` verdict with `gregorianStartDate <= today`; computes the Hijri day
+  from the verdict start (UTC day diff, DST-safe) and sets `isEstimated: false` while today is
+  within the month (day 1–30); falls back to the estimate otherwise.
+- **[`src/lib/dates.ts`](src/lib/dates.ts)** — shared Melbourne date/time/time-only formatting +
+  `formatRegionDateTime` (Indonesian times labelled WIB); [`email/format.ts`](src/lib/email/format.ts)
+  now re-exports `formatMelbourneDate` from here.
+- **[`src/lib/content.ts`](src/lib/content.ts)** — `getLatestVerdict`, `getNextTrip`,
+  `getRecentAnnouncements`; [`richText.ts`](src/lib/richText.ts) extracts plain-text announcement excerpts.
+- **Homepage [`page.tsx`](src/app/(frontend)/page.tsx):**
+  1. **[`VerdictBanner`](src/components/verdict/VerdictBanner.tsx)** — most prominent element (sighted /
+     not-sighted / awaiting-verdict), summary + published timestamp.
+  2. Hero Hijri line now flips estimate → confirmed via the resolver.
+  3. **[`UpcomingTrip`](src/components/home/UpcomingTrip.tsx)** + **[`RecentAnnouncements`](src/components/home/RecentAnnouncements.tsx)** — info cards (no dead links to Phase E routes; hidden when empty).
+  4. **[`SubscribeCta`](src/components/home/SubscribeCta.tsx)** linking to `/subscribe`.
+- **[`/subscribe`](src/app/(frontend)/subscribe/page.tsx)** — client [`SubscribeForm`](src/components/subscribe/SubscribeForm.tsx) posting to `POST /api/subscribe`, with idle/submitting/success/error states.
+- **Shared layout** — [`Footer`](src/components/layout/Footer.tsx) in [`layout.tsx`](src/app/(frontend)/layout.tsx); per-page SEO metadata on `/` and `/subscribe`; banner clears the fixed navbar.
+
+**Exit criteria:** ✅ Homepage reads live data from Payload; Hijri line flips from estimated to
+confirmed when a sighted verdict covers today; verdict banner leads the page; subscribe flow works.
+
+**Decisions made during build:** before any verdict exists, the banner shows an "awaiting verdict"
+state using the estimate (start-fresh launch); trip/announcement sections are non-clickable until
+their Phase E routes exist. ISR/caching is deferred to Phase F (homepage is `force-dynamic` for now).
 
 ---
 
@@ -231,6 +259,8 @@ Build server-component pages fetching via Local API; reuse shared card/list patt
 | `/about` | Methodology (local sighting, Indonesia role, naked-eye vs aided), contact |
 
 **Exit criteria:** All nav links in [`nav-config.ts`](src/components/nav/nav-config.ts) plus `/subscribe` and `/verdicts` resolve; mobile layouts verified; WCAG AA basics (contrast already on-brand, focus states, semantic headings).
+
+**Current partial work:** Calendar UI exists on the homepage only; it is estimate-based and still needs a standalone `/calendar` route, Payload-backed confirmed month data, and key Islamic date markers.
 
 ---
 
@@ -258,6 +288,7 @@ Build server-component pages fetching via Local API; reuse shared card/list patt
 
 ## Suggested execution order
 
-Work strictly in phase order **A → B → C → D → E → F**. Phase C and D can overlap slightly once B is done (verdict hook stub in B, email wiring in C, frontend in D), but **do not ship the public verdict banner before B** — it must read real verdicts, not placeholders.
+Work in phase order **finish A → E → F**. Phases **B**, **C**, and **D** are implemented; the public
+homepage now reads real Payload Verdicts, Trips, and Announcements.
 
-**Next concrete tasks:** Hijri helper consolidation + E2E Hijri assertion + CI E2E job → Phase B Verdicts collection with shared `HIJRI_MONTHS` → Phase D verdict override resolver on top of the existing estimate layer.
+**Next concrete tasks:** Hijri helper consolidation + E2E Hijri/verdict-banner assertions + CI E2E job → Phase E public routes (`/calendar` reusing the existing calendar components + Payload-confirmed months, then `/trips`, `/reports`, `/verdicts`, `/about`) → Phase F deploy, ISR/caching, Resend DNS, smoke tests.

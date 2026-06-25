@@ -213,6 +213,10 @@ export interface Verdict {
    */
   summary?: string | null;
   /**
+   * Image of the official verdict announcement (e.g. poster or screenshot) shown publicly beneath the verdict.
+   */
+  announcementImage?: (number | null) | Media;
+  /**
    * Set this to publish the verdict publicly. Leave empty to keep it as a draft.
    */
   publishedAt?: string | null;
@@ -501,6 +505,7 @@ export interface VerdictsSelect<T extends boolean = true> {
   status?: T;
   region?: T;
   summary?: T;
+  announcementImage?: T;
   publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;

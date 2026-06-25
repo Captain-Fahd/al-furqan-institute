@@ -87,6 +87,15 @@ export const Verdicts: CollectionConfig = {
       },
     },
     {
+      name: 'announcementImage',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description:
+          'Image of the official verdict announcement (e.g. poster or screenshot) shown publicly beneath the verdict.',
+      },
+    },
+    {
       name: 'publishedAt',
       type: 'date',
       index: true,

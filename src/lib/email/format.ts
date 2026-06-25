@@ -1,18 +1,8 @@
 import { HIJRI_MONTHS } from '@/lib/hijri/constants'
 
-const MELBOURNE_TZ = 'Australia/Melbourne'
-
-/** Formats a Gregorian date for Melbourne, e.g. "Wed, 18 Mar 2026". */
-export function formatMelbourneDate(value: string | Date): string {
-  const date = typeof value === 'string' ? new Date(value) : value
-  return new Intl.DateTimeFormat('en-AU', {
-    timeZone: MELBOURNE_TZ,
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
+// Shared Melbourne date formatting lives in src/lib/dates.ts; re-exported here
+// so existing email callers keep their import path.
+export { formatMelbourneDate } from '@/lib/dates'
 
 /** Human label for a verdict subject line and heading. */
 export function verdictHeadline(

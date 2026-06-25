@@ -1,8 +1,7 @@
-import config from '@payload-config'
-import { getPayload } from 'payload'
 import React from 'react'
 
 import { StatusPage } from '@/components/status/StatusPage'
+import { getPayloadClient } from '@/lib/payload'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +25,7 @@ export default async function UnsubscribePage(props: {
     )
   }
 
-  const payload = await getPayload({ config })
+  const payload = await getPayloadClient()
 
   const { docs } = await payload.find({
     collection: 'subscribers',

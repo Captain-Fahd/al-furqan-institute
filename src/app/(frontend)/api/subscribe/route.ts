@@ -1,8 +1,7 @@
-import config from '@payload-config'
 import { NextResponse } from 'next/server'
-import { getPayload } from 'payload'
 
 import { sendConfirmationEmail } from '@/lib/email/send'
+import { getPayloadClient } from '@/lib/payload'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -29,7 +28,7 @@ export async function POST(request: Request) {
   }
 
   const normalizedEmail = email.trim().toLowerCase()
-  const payload = await getPayload({ config })
+  const payload = await getPayloadClient()
 
   const successResponse = NextResponse.json({
     message:

@@ -1,8 +1,8 @@
 import { Heading, Stack, Text } from '@chakra-ui/react'
-import { getHijriDateDisplay } from '@/lib/hijri'
+import type { HijriDateDisplay } from '@/lib/hijri'
 
-export function HeroBrand() {
-  const { hijriLabel, gregorianLabel, locationLabel, isEstimated } = getHijriDateDisplay()
+export function HeroBrand({ display }: { display: HijriDateDisplay }) {
+  const { hijriLabel, gregorianLabel, locationLabel, isEstimated } = display
 
   return (
     <Stack gap={{ base: 3, md: 4 }} align="flex-start">
