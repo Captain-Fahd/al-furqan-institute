@@ -16,7 +16,7 @@ import { getPayloadClient } from '@/lib/payload'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Al-Furqan Institute — Moonsighting verdicts for Melbourne',
+  title: 'AlFurqan Institute — Moonsighting verdicts for Melbourne',
   description:
     'Official Hijri month verdicts and moonsighting updates for Melbourne, Australia. See the latest ruling, live prayer times, and the Hijri calendar.',
   openGraph: {

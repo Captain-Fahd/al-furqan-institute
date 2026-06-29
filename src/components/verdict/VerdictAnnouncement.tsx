@@ -20,7 +20,7 @@ export function VerdictAnnouncement({ verdict }: VerdictAnnouncementProps) {
     <Box as="section" bg="brand.900" pb={{ base: 12, md: 16 }}>
       <Container maxW="6xl">
         <Stack gap={{ base: 4, md: 5 }}>
-          <Stack gap={1}>
+          <Stack gap={1} align="center" textAlign="center">
             <Text
               color="accent.400"
               fontSize={{ base: 'sm', md: 'md' }}
@@ -42,12 +42,15 @@ export function VerdictAnnouncement({ verdict }: VerdictAnnouncementProps) {
             rounded="2xl"
             overflow="hidden"
             shadow="md"
+            maxW={{ base: 'full', md: 'xl' }}
+            mx="auto"
           >
             <Image
               src={image.url}
               alt={image.alt || 'Official verdict announcement'}
               width="100%"
               height="auto"
+              maxH={{ base: '60vh', md: '70vh' }}
               objectFit="contain"
             />
           </Box>

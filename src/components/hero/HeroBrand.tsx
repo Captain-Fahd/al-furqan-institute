@@ -15,7 +15,7 @@ export function HeroBrand({ display }: { display: HijriDateDisplay }) {
           letterSpacing="wider"
           lineHeight="0.95"
         >
-          Al Furqan Institute
+          AlFurqan Institute
         </Heading>
         <Text
           color="accent.400"
